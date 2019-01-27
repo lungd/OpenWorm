@@ -74,10 +74,13 @@ print("****************************")
 
 OW_OUT_DIR = os.environ['OW_OUT_DIR']
 
-def execute_with_realtime_output(command, directory, env=None):
+def execute_with_realtime_output(command, directory, env=os.environ, shell=False):
     p = None
     try:
-        p = Popen(shlex.split(command), stdout=PIPE, bufsize=1, cwd=directory, env=env)
+        if shell:
+            p = Popen(command, stdout=PIPE, bufsize=1, cwd=directory, env=env, shell=True)
+        else:
+            p = Popen(shlex.split(command), stdout=PIPE, bufsize=1, cwd=directory, env=env)
         with p.stdout:
             for line in iter(p.stdout.readline, b''):
                 print(line, end="")
@@ -156,7 +159,7 @@ try:
     if len(sys.argv) is 2 and sys.argv[1] == "-rerunOnly":
         rerunOnly = True
     if not rerunOnly:
-        execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], env=my_env)
+        execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'])
 except KeyboardInterrupt as e:
     pass
 
@@ -205,12 +208,12 @@ for wcon in wcons:
 
 
 # Rerun and record simulation
-os.system('export DISPLAY=:44')
+#os.system('export DISPLAY=:44')
 sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
 os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
 
-command = './Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
-execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], env=my_env)
+command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
+execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
 
 os.system('tmux send-keys -t SiberneticRecording q')
 os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
