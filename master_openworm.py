@@ -221,7 +221,10 @@ os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
 os.system('killall Xvfb')
 time.sleep(3)
 
-# Remove black frames at the beginning of the recorded video
+
+## Remove black frames
+
+# find black frames
 command = "ffmpeg -i %s/%s -vf blackdetect=d=0:pic_th=0.70:pix_th=0.10 -an -f null - 2>&1 | grep blackdetect" % (new_sim_out, sibernetic_movie_name)
 outstr = check_output(command, shell=True)
 outstr = outstr.split('\n')
@@ -233,18 +236,35 @@ black_dur = None
 out = outstr[0]
 # for out in outstr:
  
+# TODO: Refactoring
 black_start_pos = out.find('black_start:')
 black_end_pos = out.find('black_end:')
 black_dur_pos = out.find('black_duration:')
 if black_start_pos != -1:
     black_start = float(out[black_start_pos + len('black_start:') : black_end_pos])
+    black_end = float(out[black_end_pos + len('black_end:'): black_dur_pos])
     black_dur = float(out[black_dur_pos + len('black_duration:'):])
 
+black_start2 = None
+
+if len(outstr) == 3:
+    # last elem inside outstr == ''
+    out2 = outstr[1]
+    black_start_pos2 = out2.find('black_start:')
+    black_end_pos2 = out2.find('black_end:')
+    black_dur_pos2 = out2.find('black_duration:')
+    if black_start_pos2 != -1:
+        black_start2 = float(out2[black_start_pos2 + len('black_start:') : black_end_pos2])
+        black_end2 = float(out2[black_end_pos2 + len('black_end:'): black_dur_pos2])
+        black_dur2 = float(out2[black_dur_pos2 + len('black_duration:'):])
+        black_start2 -= 0.04
+
 if black_start == 0.0 and black_dur:
-    black_dur = int(math.ceil(black_dur))
-    command = 'ffmpeg -y -ss 00:00:0%s -i %s/%s -c copy -avoid_negative_ts 1 %s/cut_%s' % (black_dur, new_sim_out, sibernetic_movie_name, new_sim_out, sibernetic_movie_name)
-    if black_dur > 9:
-        command = 'ffmpeg -y -ss 00:00:%s -i %s/%s -c copy -avoid_negative_ts 1 %s/cut_%s' % (black_dur, new_sim_out, sibernetic_movie_name, new_sim_out, sibernetic_movie_name)
+    # remove black frame at the beginning of the video
+    command = 'ffmpeg -y -i %s/%s -ss %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, new_sim_out, sibernetic_movie_name)
+    if black_start2:
+        # also remove black frame at the end of the video
+        command = 'ffmpeg -y -i %s/%s -ss %s -to %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, black_start2, new_sim_out, sibernetic_movie_name)
     os.system(command)
 
 # SPEED-UP
