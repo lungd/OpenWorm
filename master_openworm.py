@@ -156,8 +156,10 @@ try:
     rerunOnly = False
     if len(sys.argv) is 2 and sys.argv[1] == "-rerunOnly":
         rerunOnly = True
+        print("Sibernetic + c302 simulation skipped")
     if not rerunOnly:
         execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'])
+        print("Sibernetic + c302 simulation finished")
 except KeyboardInterrupt as e:
     pass
 
@@ -209,19 +211,24 @@ try:
     # Rerun and record simulation
     #os.system('export DISPLAY=:44')
 
-    os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &') # TODO: terminate xvfb after recording
+    try:
+        os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &') # TODO: terminate xvfb after recording
 
-    sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
-    os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
+        sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
+        os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
 
-    command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
-    execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
+        command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
+        execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
+        print("Rerun of simulation and recording finished")
+    except:
+        pass
+    finally:
+        os.system('tmux send-keys -t SiberneticRecording q')
+        os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
 
-    os.system('tmux send-keys -t SiberneticRecording q')
-    os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
-
-    os.system('killall Xvfb')
-    time.sleep(3)
+        os.system('killall Xvfb')
+        time.sleep(3)
+        
 
 
     ## Remove black frames
@@ -262,12 +269,15 @@ try:
             black_start2 -= 0.04
 
     if black_start == 0.0 and black_dur:
+        # TODO: Check perfomance compared to other params
         # remove black frame at the beginning of the video
         command = 'ffmpeg -y -i %s/%s -ss %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, new_sim_out, sibernetic_movie_name)
         if black_start2:
             # also remove black frame at the end of the video
             command = 'ffmpeg -y -i %s/%s -ss %s -to %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, black_start2, new_sim_out, sibernetic_movie_name)
         os.system(command)
+
+    print("Black frames removed")
 
     # SPEED-UP
     try:
@@ -278,6 +288,8 @@ try:
 
     os.system('ffmpeg -y -ss 1 -i %s/cut_%s -vf "select=gt(scene\,0.1)" -vsync vfr -vf fps=fps=1/1 %s' % (new_sim_out, sibernetic_movie_name, 'tmp/out%06d.jpg'))
     os.system('ffmpeg -y -r 100 -i %s -r 100 -vb 60M %s/speeded_%s' % ('tmp/out%06d.jpg', new_sim_out, sibernetic_movie_name))
+
+    print("Created speeded-up video")
 
     os.system('sudo rm -r tmp/*')
 except:
