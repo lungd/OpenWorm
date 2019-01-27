@@ -215,6 +215,7 @@ execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], env=my_env)
 os.system('tmux send-keys -t SiberneticRecording q')
 os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
 
+os.system('killall Xvfb')
 time.sleep(3)
 
 # Remove black frames at the beginning of the recorded video
