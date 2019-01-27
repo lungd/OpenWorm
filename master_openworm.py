@@ -130,8 +130,6 @@ DEFAULTS = {'duration': sim_duration,
 my_env = os.environ.copy()
 my_env["DISPLAY"] = ":44"
 
-os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &') # TODO: terminate xvfb after recording
-
 try:
     command = """python sibernetic_c302.py 
                 -duration %s 
@@ -207,78 +205,83 @@ for wcon in wcons:
     shutil.move(wcon, new_sim_out)
 
 
-# Rerun and record simulation
-#os.system('export DISPLAY=:44')
-sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
-os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
-
-command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
-execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
-
-os.system('tmux send-keys -t SiberneticRecording q')
-os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
-
-os.system('killall Xvfb')
-time.sleep(3)
-
-
-## Remove black frames
-
-# find black frames
-command = "ffmpeg -i %s/%s -vf blackdetect=d=0:pic_th=0.70:pix_th=0.10 -an -f null - 2>&1 | grep blackdetect" % (new_sim_out, sibernetic_movie_name)
-outstr = check_output(command, shell=True)
-outstr = outstr.split('\n')
-
-black_start = 0.0
-black_dur = None
-
-
-out = outstr[0]
-# for out in outstr:
- 
-# TODO: Refactoring
-black_start_pos = out.find('black_start:')
-black_end_pos = out.find('black_end:')
-black_dur_pos = out.find('black_duration:')
-if black_start_pos != -1:
-    black_start = float(out[black_start_pos + len('black_start:') : black_end_pos])
-    black_end = float(out[black_end_pos + len('black_end:'): black_dur_pos])
-    black_dur = float(out[black_dur_pos + len('black_duration:'):])
-
-black_start2 = None
-
-if len(outstr) == 3:
-    # last elem inside outstr == ''
-    out2 = outstr[1]
-    black_start_pos2 = out2.find('black_start:')
-    black_end_pos2 = out2.find('black_end:')
-    black_dur_pos2 = out2.find('black_duration:')
-    if black_start_pos2 != -1:
-        black_start2 = float(out2[black_start_pos2 + len('black_start:') : black_end_pos2])
-        black_end2 = float(out2[black_end_pos2 + len('black_end:'): black_dur_pos2])
-        black_dur2 = float(out2[black_dur_pos2 + len('black_duration:'):])
-        black_start2 -= 0.04
-
-if black_start == 0.0 and black_dur:
-    # remove black frame at the beginning of the video
-    command = 'ffmpeg -y -i %s/%s -ss %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, new_sim_out, sibernetic_movie_name)
-    if black_start2:
-        # also remove black frame at the end of the video
-        command = 'ffmpeg -y -i %s/%s -ss %s -to %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, black_start2, new_sim_out, sibernetic_movie_name)
-    os.system(command)
-
-# SPEED-UP
 try:
-    os.mkdir('tmp')
-except OSError as e:
-    if e.errno != errno.EEXIST:
-        raise
+    # Rerun and record simulation
+    #os.system('export DISPLAY=:44')
 
-os.system('ffmpeg -y -ss 1 -i %s/cut_%s -vf "select=gt(scene\,0.1)" -vsync vfr -vf fps=fps=1/1 %s' % (new_sim_out, sibernetic_movie_name, 'tmp/out%06d.jpg'))
-os.system('ffmpeg -y -r 100 -i %s -r 100 -vb 60M %s/speeded_%s' % ('tmp/out%06d.jpg', new_sim_out, sibernetic_movie_name))
+    os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &') # TODO: terminate xvfb after recording
 
-os.system('sudo rm -r tmp/*')
+    sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
+    os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
 
+    command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
+    execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
+
+    os.system('tmux send-keys -t SiberneticRecording q')
+    os.system('tmux send-keys -t SiberneticRecording "exit" C-m')
+
+    os.system('killall Xvfb')
+    time.sleep(3)
+
+
+    ## Remove black frames
+
+    # find black frames
+    command = "ffmpeg -i %s/%s -vf blackdetect=d=0:pic_th=0.70:pix_th=0.10 -an -f null - 2>&1 | grep blackdetect" % (new_sim_out, sibernetic_movie_name)
+    outstr = check_output(command, shell=True)
+    outstr = outstr.split('\n')
+
+    black_start = 0.0
+    black_dur = None
+
+
+    out = outstr[0]
+    # for out in outstr:
+     
+    # TODO: Refactoring
+    black_start_pos = out.find('black_start:')
+    black_end_pos = out.find('black_end:')
+    black_dur_pos = out.find('black_duration:')
+    if black_start_pos != -1:
+        black_start = float(out[black_start_pos + len('black_start:') : black_end_pos])
+        black_end = float(out[black_end_pos + len('black_end:'): black_dur_pos])
+        black_dur = float(out[black_dur_pos + len('black_duration:'):])
+
+    black_start2 = None
+
+    if len(outstr) == 3:
+        # last elem inside outstr == ''
+        out2 = outstr[1]
+        black_start_pos2 = out2.find('black_start:')
+        black_end_pos2 = out2.find('black_end:')
+        black_dur_pos2 = out2.find('black_duration:')
+        if black_start_pos2 != -1:
+            black_start2 = float(out2[black_start_pos2 + len('black_start:') : black_end_pos2])
+            black_end2 = float(out2[black_end_pos2 + len('black_end:'): black_dur_pos2])
+            black_dur2 = float(out2[black_dur_pos2 + len('black_duration:'):])
+            black_start2 -= 0.04
+
+    if black_start == 0.0 and black_dur:
+        # remove black frame at the beginning of the video
+        command = 'ffmpeg -y -i %s/%s -ss %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, new_sim_out, sibernetic_movie_name)
+        if black_start2:
+            # also remove black frame at the end of the video
+            command = 'ffmpeg -y -i %s/%s -ss %s -to %s -strict 2 -avoid_negative_ts 1 %s/cut_%s' % (new_sim_out, sibernetic_movie_name, black_end, black_start2, new_sim_out, sibernetic_movie_name)
+        os.system(command)
+
+    # SPEED-UP
+    try:
+        os.mkdir('tmp')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    os.system('ffmpeg -y -ss 1 -i %s/cut_%s -vf "select=gt(scene\,0.1)" -vsync vfr -vf fps=fps=1/1 %s' % (new_sim_out, sibernetic_movie_name, 'tmp/out%06d.jpg'))
+    os.system('ffmpeg -y -r 100 -i %s -r 100 -vb 60M %s/speeded_%s' % ('tmp/out%06d.jpg', new_sim_out, sibernetic_movie_name))
+
+    os.system('sudo rm -r tmp/*')
+except:
+    pass
 
 
 print("****************************")
