@@ -152,7 +152,12 @@ try:
                 DEFAULTS['datareader'],
                 'simulations') 
                 #DEFAULTS['outDir'])
-    execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], env=my_env)
+    rerunOnly = True
+    print sys.argv
+    if len(sys.argv) is 2 and sys.argv[1] == "-rerunOnly":
+        rerunOnly = True
+    if not rerunOnly:
+        execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], env=my_env)
 except KeyboardInterrupt as e:
     pass
 
