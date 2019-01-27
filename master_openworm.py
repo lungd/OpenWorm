@@ -153,7 +153,6 @@ try:
                 'simulations') 
                 #DEFAULTS['outDir'])
     rerunOnly = True
-    print sys.argv
     if len(sys.argv) is 2 and sys.argv[1] == "-rerunOnly":
         rerunOnly = True
     if not rerunOnly:
@@ -208,7 +207,7 @@ for wcon in wcons:
 # Rerun and record simulation
 os.system('export DISPLAY=:44')
 sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
-os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
+os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
 
 command = './Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
 execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], env=my_env)
@@ -239,9 +238,9 @@ if black_start_pos != -1:
 
 if black_start == 0.0 and black_dur:
     black_dur = int(math.ceil(black_dur))
-    command = 'ffmpeg -ss 00:00:0%s -i %s/%s -c copy -avoid_negative_ts 1 %s/cut_%s' % (black_dur, new_sim_out, sibernetic_movie_name, new_sim_out, sibernetic_movie_name)
+    command = 'ffmpeg -y -ss 00:00:0%s -i %s/%s -c copy -avoid_negative_ts 1 %s/cut_%s' % (black_dur, new_sim_out, sibernetic_movie_name, new_sim_out, sibernetic_movie_name)
     if black_dur > 9:
-        command = 'ffmpeg -ss 00:00:%s -i %s/%s -c copy -avoid_negative_ts 1 %s/cut_%s' % (black_dur, new_sim_out, sibernetic_movie_name, new_sim_out, sibernetic_movie_name)
+        command = 'ffmpeg -y -ss 00:00:%s -i %s/%s -c copy -avoid_negative_ts 1 %s/cut_%s' % (black_dur, new_sim_out, sibernetic_movie_name, new_sim_out, sibernetic_movie_name)
     os.system(command)
 
 # SPEED-UP
@@ -251,8 +250,8 @@ except OSError as e:
     if e.errno != errno.EEXIST:
         raise
 
-os.system('ffmpeg -ss 1 -i %s/cut_%s -vf "select=gt(scene\,0.1)" -vsync vfr -vf fps=fps=1/1 %s' % (new_sim_out, sibernetic_movie_name, 'tmp/out%06d.jpg'))
-os.system('ffmpeg -r 100 -i %s -r 100 -vb 60M %s/speeded_%s' % ('tmp/out%06d.jpg', new_sim_out, sibernetic_movie_name))
+os.system('ffmpeg -y -ss 1 -i %s/cut_%s -vf "select=gt(scene\,0.1)" -vsync vfr -vf fps=fps=1/1 %s' % (new_sim_out, sibernetic_movie_name, 'tmp/out%06d.jpg'))
+os.system('ffmpeg -y -r 100 -i %s -r 100 -vb 60M %s/speeded_%s' % ('tmp/out%06d.jpg', new_sim_out, sibernetic_movie_name))
 
 os.system('sudo rm -r tmp/*')
 
