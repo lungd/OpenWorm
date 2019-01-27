@@ -155,7 +155,7 @@ try:
                 DEFAULTS['datareader'],
                 'simulations') 
                 #DEFAULTS['outDir'])
-    rerunOnly = True
+    rerunOnly = False
     if len(sys.argv) is 2 and sys.argv[1] == "-rerunOnly":
         rerunOnly = True
     if not rerunOnly:
