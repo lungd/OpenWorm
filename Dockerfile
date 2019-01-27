@@ -115,11 +115,11 @@ RUN git clone https://github.com/openworm/c302.git && \
   # https://github.com/openworm/sibernetic/commit/3eb9914db040fff852cba76ef8f4f39d0bed3294
 #  git checkout 3eb9914 
 
-RUN git clone https://github.com/pgleeson/sibernetic.git && \
+RUN git clone https://github.com/lungd/sibernetic.git && \
   cd sibernetic && \
   # fixed to a specific commit in development branch:
   # https://github.com/openworm/sibernetic/commit/3eb9914db040fff852cba76ef8f4f39d0bed3294
-  git checkout test_dev 
+  git checkout development 
 
 ENV JNML_HOME=$HOME/jNeuroML
 ENV PATH=$PATH:$JNML_HOME
@@ -131,16 +131,6 @@ ENV NEURON_HOME=$N/$CPU
 ENV C302_HOME=$HOME/c302/c302
 ENV SIBERNETIC_HOME=$HOME/sibernetic
 ENV PYTHONPATH=$PYTHONPATH:$HOME/c302:$SIBERNETIC_HOME
-
-
-
-#RUN cd sibernetic && \
-#make clean && make all
-
-# Not working with --chown=$USER:$USER
-COPY ./master_openworm.py $HOME/master_openworm.py
-RUN sudo chown $USER:$USER $HOME/master_openworm.py
-
 
 RUN mkdir intel-opencl-tmp && \
   cd intel-opencl-tmp && \
@@ -161,6 +151,10 @@ sudo apt install -y ocl-icd-opencl-dev
 
 RUN cd sibernetic && \
 make clean && make all
+
+# Not working with --chown=$USER:$USER
+COPY ./master_openworm.py $HOME/master_openworm.py
+RUN sudo chown $USER:$USER $HOME/master_openworm.py
 
 # intel i5, hd 5500, linux 4.15.0-39-generic
 # ./Release/Sibernetic -f worm -no_g device=CPU    190ms
