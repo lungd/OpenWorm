@@ -153,11 +153,11 @@ try:
                 DEFAULTS['datareader'],
                 'simulations') 
                 #DEFAULTS['outDir'])
-    rerunOnly = False
-    if len(sys.argv) is 2 and sys.argv[1] == "-rerunOnly":
-        rerunOnly = True
+    skip_simulation = False
+    if len(sys.argv) >= 2 and "-skip_simulation" in sys.argv:
+        skip_simulation = True
         print("Sibernetic + c302 simulation skipped")
-    if not rerunOnly:
+    if not skip_simulation:
         execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'])
         print("Sibernetic + c302 simulation finished")
 except KeyboardInterrupt as e:
@@ -217,7 +217,15 @@ try:
         sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
         os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
 
-        command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s' % (DEFAULTS['configuration'], latest_subdir)
+        skip_display = ''
+        if '-skip_display_particle' in sys.argv:
+            skip_display += '-skip_display_particles '
+        if '-skip_display_connections' in sys.argv:
+            skip_display += '-skip_display_membranes '
+        if '-skip_display_membranes' in sys.argv:
+            skip_display += '-skip_display_membranes '
+
+        command = 'DISPLAY=:44 ./Release/Sibernetic -f %s -l_from lpath=%s %s' % (DEFAULTS['configuration'], latest_subdir, skip_display)
         execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
         print("Rerun of simulation and recording finished")
     except:
