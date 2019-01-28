@@ -115,7 +115,7 @@ if 'DURATION' in os.environ:
     sim_duration = float(os.environ['DURATION'])
 
 DEFAULTS = {'duration': sim_duration,
-            'dt': 0.005,
+            'dt': 0.02,
             'dtNrn': 0.05,
             'logstep': 100,
             'reference': 'FW',
@@ -131,16 +131,18 @@ my_env = os.environ.copy()
 my_env["DISPLAY"] = ":44"
 
 try:
-    command = """python sibernetic_c302.py 
-                -duration %s 
-                -dt %s 
-                -dtNrn %s 
-                -logstep %s 
-                -device=%s 
-                -configuration %s 
-                -reference %s 
-                -c302params %s 
-                -datareader %s 
+    os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &')
+
+    command = """DISPLAY=:44 python sibernetic_c302.py \
+                -duration %s \
+                -dt %s \
+                -dtNrn %s \
+                -logstep %s \
+                -device=%s \
+                -configuration %s \
+                -reference %s \
+                -c302params %s \
+                -datareader %s \
                 -outDir %s""" % \
                 (DEFAULTS['duration'],
                 DEFAULTS['dt'],
@@ -158,7 +160,7 @@ try:
         skip_simulation = True
         print("Sibernetic + c302 simulation skipped")
     if not skip_simulation:
-        execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'])
+        execute_with_realtime_output(command, os.environ['SIBERNETIC_HOME'], shell=True)
         print("Sibernetic + c302 simulation finished")
 except KeyboardInterrupt as e:
     pass
@@ -212,7 +214,7 @@ try:
     #os.system('export DISPLAY=:44')
 
     try:
-        os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &') # TODO: terminate xvfb after recording
+        #os.system('Xvfb :44 -listen tcp -ac -screen 0 1920x1080x24+32 &')
 
         sibernetic_movie_name = '%s.mp4' % os.path.split(latest_subdir)[-1]
         os.system('tmux new-session -d -s SiberneticRecording "DISPLAY=:44 ffmpeg -y -r 30 -f x11grab -draw_mouse 0 -s 1920x1080 -i :44 -filter:v "crop=1200:800:100:100" -cpu-used 0 -b:v 384k -qmin 10 -qmax 42 -maxrate 384k -bufsize 1000k -an %s/%s"' % (new_sim_out, sibernetic_movie_name))
