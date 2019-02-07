@@ -105,9 +105,9 @@ RUN git clone https://github.com/openworm/PyOpenWorm.git && \
   git checkout 7ff1266 && \
   sudo python setup.py install
 
-RUN git clone https://github.com/openworm/c302.git && \  
+RUN git clone https://github.com/lungd/c302.git && \  
   cd c302 && \
-  git checkout master
+  git checkout touch_sensation
 
 #RUN git clone https://github.com/openworm/sibernetic.git && \
 #  cd sibernetic && \

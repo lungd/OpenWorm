@@ -121,7 +121,7 @@ DEFAULTS = {'duration': sim_duration,
             'reference': 'FW',
             'c302params': 'C2',
             'verbose': False,
-            'device': 'GPU',
+            'device': 'CPU',
             'configuration': 'worm_crawl_half_resolution',
             'noc302': False,
             'datareader': 'UpdatedSpreadsheetDataReader2',
@@ -207,6 +207,12 @@ wcons = glob.glob('%s/*.wcon' % latest_subdir)
 for wcon in wcons:
     print("Moving %s to %s"%(wcon, new_sim_out))
     shutil.move(wcon, new_sim_out)
+
+# Move sectiontouch file
+sectiontouch = glob.glob('%s/sectiontouch.txt' % latest_subdir)
+for wcon in wcons:
+    print("Moving %s to %s"%(sectiontouch, new_sim_out))
+    shutil.move(sectiontouch, new_sim_out)
 
 
 try:
