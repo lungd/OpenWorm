@@ -209,10 +209,8 @@ for wcon in wcons:
     shutil.move(wcon, new_sim_out)
 
 # Move sectiontouch file
-sectiontouch = glob.glob('%s/sectiontouch.txt' % latest_subdir)
-for wcon in wcons:
-    print("Moving %s to %s"%(sectiontouch, new_sim_out))
-    shutil.move(sectiontouch, new_sim_out)
+sectiontouch = '%s/sectiontouch.txt' % latest_subdir
+shutil.move(sectiontouch, new_sim_out)
 
 
 try:
