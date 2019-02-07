@@ -119,7 +119,7 @@ RUN git clone https://github.com/lungd/sibernetic.git && \
   cd sibernetic && \
   # fixed to a specific commit in development branch:
   # https://github.com/openworm/sibernetic/commit/3eb9914db040fff852cba76ef8f4f39d0bed3294
-  git checkout development 
+  git checkout touch_sensation 
 
 ENV JNML_HOME=$HOME/jNeuroML
 ENV PATH=$PATH:$JNML_HOME
